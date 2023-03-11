@@ -1,0 +1,62 @@
+import os
+import time
+import pyaudio
+import wave 
+
+# Parameters for audio recording
+FORMAT = pyaudio.paInt16
+CHANNELS = 1
+RATE = 44100
+CHUNK = 1024
+RECORD_SECONDS = 2
+
+# Create directory for recordings
+if not os.path.exists("Background"):
+    os.makedirs("Background")
+
+# Start recording background noise
+audio = pyaudio.PyAudio()
+stream = audio.open(format=FORMAT, channels=CHANNELS,
+                    rate=RATE, input=True,
+                    frames_per_buffer=CHUNK)
+frames = []
+print("Recording background noise for 2 seconds...")
+for i in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+    data = stream.read(CHUNK)
+    frames.append(data)
+print("Finished recording background noise")
+
+# Save background noise to a file
+wf = wave.open("Background/background.wav", 'wb')
+wf.setnchannels(CHANNELS)
+wf.setsampwidth(audio.get_sample_size(FORMAT))
+wf.setframerate(RATE)
+wf.writeframes(b''.join(frames))
+wf.close()
+
+# Record 100 samples of "Apsara" keyword
+print("Starting keyword recordings...")
+for i in range(46, 101):
+    print(f"Recording {i}/100 - Press Enter to start")
+    # Start recording
+    stream = audio.open(format=FORMAT, channels=CHANNELS,
+                        rate=RATE, input=True,
+                        frames_per_buffer=CHUNK)
+    frames = []
+    for j in range(0, int(RATE / CHUNK * RECORD_SECONDS)):
+        data = stream.read(CHUNK)
+        frames.append(data)
+    # Save recording to a file
+    filename = f"Background/{i}.wav"
+    wf = wave.open(filename, 'wb')
+    wf.setnchannels(CHANNELS)
+    wf.setsampwidth(audio.get_sample_size(FORMAT))
+    wf.setframerate(RATE)
+    wf.writeframes(b''.join(frames))
+    wf.close()
+    print(f"Recording {i}/100 complete")
+    
+# Clean up
+stream.stop_stream()
+stream.close()
+audio.terminate()
